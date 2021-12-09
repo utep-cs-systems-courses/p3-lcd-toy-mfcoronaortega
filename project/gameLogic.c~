@@ -1,0 +1,92 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <string.h>
+
+
+char *selected_word(void)
+{
+  char * word_bank[5];
+  word_bank[0] = "SCIENTIST";
+  word_bank[1] = "UTEP";
+  word_bank[2] = "COMPUTER";
+  word_bank[3] = "CODING";
+  word_bank[4] = "VIRTUAL";
+  
+  srand(time(NULL));
+  int word_pick = rand() % 6;
+  printf("%d\n", word_pick);
+
+  printf("Picked word: %s\n", word_bank[word_pick]);
+
+  return word_bank[word_pick];
+}
+
+int isFound(char letter, char * my_word){
+  int size = strlen(my_word);
+  int right = 0;
+
+  int i = 0;
+  for(i = 0; i < size; i++){
+    if(my_word[i] == letter){
+      printf("The letter %c is present!\n", letter);
+      right++;
+    }
+  }
+  return right;
+}
+
+int isWin(int total_count){
+  if(total_count = 0){//no letters left to guess
+    return 1;
+  } else {
+    return 0; //total letter count is not over (letters left to guess)
+  }
+}
+
+int isLoss(int tries){
+  if(tries = 0){
+    return 1; //if we run out of trues we lost
+  } else {
+    return 0; //if we still have tries we have not lost
+  }
+}
+
+void gameManager(char * myWord){
+  char guess[20];
+  int results;
+  int tries = 6; //6 tries to guess (1)head, (2)body, (3/4)left/right arms, (5/6)left/right legs
+  int total_letter_count = strlen(myWord);//letters to guess
+  
+  do{
+    fgets(guess, 20, stdin);
+    printf("your guess is: %c\n", guess[0]);
+    results = isFound(guess[0], myWord);
+    printf("Occurances: %d", results);
+    if(results = 0){
+      tries--;
+      printf("%d\n", tries);
+    }
+    if(results > 0){
+      total_letter_count -= results;
+      printf("%d\n", total_letter_count);
+    }
+
+  }while((isLoss(tries)!= 1) || (isWin(total_letter_count) != 1));//while we havent lost or won
+
+  if(isLoss(tries)){
+    printf("Sorry you lost!\n");
+  }
+  if(isWin(total_letter_count)){
+    printf("Congrats you won!\n");
+  }
+
+  printf("End manager!!\n");
+
+}
+
+
+void main (void){
+  char * my_word = selected_word();
+  gameManager(my_word);
+}

@@ -1,0 +1,132 @@
+#include <msp430.h>
+#include <libTimer.h>
+#include "lcdutils.h"
+#include "lcddraw.h"
+#include "switches.h"
+#include "led.h"
+
+// WARNING: LCD DISPLAY USES P1.0.  Do not touch!!! 
+
+
+char redraw_screen = 1;
+u_int backgroundColor = COLOR_WHITE;
+
+
+void drawGameLayout(void)
+{
+  const u_char welcome_row = 10;
+  const u_char welcome_col = 10;
+  const u_int title_color = COLOR_BLACK;
+
+  drawString5x7(welcome_col, welcome_row, "WELCOME TO HANGMAN", title_color, COLOR_YELLOW);
+  
+  const u_char start_row = 120;
+  static u_char start_col = 10;
+  const u_char char_width = 12;
+  const u_char char_height = 12;
+  const u_int grid_color = COLOR_BLACK;
+
+  char letter_bank1[9] = {'A', 'B', 'C', 'D', 'E', 'F' ,'G', 'H', 'I'};
+  char letter_bank2[9] = {'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R'};
+  char letter_bank3[8] = {'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
+  
+  int x = 0;
+  for(x = 0; x < 9; x++){
+    drawChar5x7(start_col, start_row, letter_bank1[x] , grid_color, backgroundColor);
+    start_col += char_width;
+  }
+
+  start_col = 10;
+  
+  for(x = 0; x < 9; x++){
+    drawChar5x7(start_col, start_row + char_height, letter_bank2[x], grid_color, backgroundColor);
+    start_col += char_width;
+  }
+
+  start_col = 10;
+  
+  for(x = 0; x < 8; x++){
+    drawChar5x7(start_col, start_row + char_height + char_height, letter_bank3[x], grid_color, backgroundColor);
+    start_col += char_width;
+  }
+
+  static u_char pole_row = 90;//side to side
+  static u_char pole_col = 30;//up, down
+  const u_int pole_color = COLOR_BLACK;
+  
+  int y = 0;
+  
+  for(y = 0; y <= 65; y++){
+    drawPixel(pole_row, pole_col, pole_color);
+    pole_col++;
+  }
+
+  pole_row = 90;
+  pole_col = 30;
+  
+  for(y = 0; y <= 40; y++){
+    drawPixel(pole_row, pole_col, pole_color);
+    pole_row--;
+  }
+
+  pole_col = 30;
+  for(y = 0; y <= 15; y++){
+    drawPixel(pole_row, pole_col, pole_color);
+    pole_col++;
+  }
+}
+
+void update_text(void)
+{
+  const u_char text_row = 105;
+  const u_char text_col = 35;
+  const u_char char_width = 12;
+  static u_char blue = 31, green = 16, red = 31;
+  u_int on_color  =                (green << 5) | red;
+  u_int off_color = (blue << 11)                | red;
+  
+  if (switch1_state == down) {
+    drawString5x7(text_col, text_row, "H E L L O", on_color, backgroundColor);
+    //drawChar5x7(text_col, text_row, '_', on_color, backgroundColor);
+  } else {
+    drawString5x7(text_col, text_row, "_ _ _ _ _", off_color, backgroundColor);
+    //drawChar5x7(text_col, text_row, '-',off_color, backgroundColor);
+  }
+  if (switch2_state == down) {
+    //drawChar5x7(text_col + char_width, text_row, 'S',on_color, backgroundColor);
+  } else {
+    //drawChar5x7(text_col + char_width, text_row, '-',off_color, backgroundColor);
+  }
+
+}
+
+void main(void)
+{
+  
+  configureClocks();
+  led_init();
+  switch_p2_init();
+  lcd_init();
+  
+  //enableWDTInterrupts();      /**< enable periodic interrupt */
+  or_sr(0x8);	              /**< GIE (enable interrupts) */
+  
+  clearScreen(backgroundColor);
+
+  drawGameLayout();
+  
+  while (1) { /* forever */
+    if (redraw_screen) {
+      redraw_screen = 0;
+      update_text();
+    }
+    green_on = 0;   	/* led off */
+    led_changed = 1;
+    led_update();
+    or_sr(0x10);	/**< CPU OFF */
+    
+    green_on = 1;	/* led on */
+    led_changed = 1;
+    led_update();
+  }
+}
